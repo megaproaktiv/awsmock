@@ -1,4 +1,4 @@
-module awsmock
+module github.com/megaproaktiv/awsmock
 
 go 1.17
 
