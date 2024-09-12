@@ -3,6 +3,7 @@ package awsmock
 import (
 	"context"
 	"reflect"
+
 	"github.com/aws/aws-sdk-go-v2/aws"
 	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
 	"github.com/aws/smithy-go/middleware"
@@ -59,7 +60,7 @@ func (s saveRequestMiddleware) HandleInitialize(ctx context.Context, in middlewa
 
 func (a *AwsMockHandler) AwsConfig() aws.Config {
 	cfg := aws.NewConfig()
-	cfg.Region = "us-mars-1"
+	cfg.Region = "eu-saturn-1"
 	cfg.APIOptions = []func(*middleware.Stack) error{
 		func(stack *middleware.Stack) error {
 			// We leave the serialization middleware intact in the vain hope that
@@ -85,17 +86,20 @@ func (a *AwsMockHandler) AwsConfig() aws.Config {
 	return *cfg
 }
 
-
-func (a *AwsMockHandler) AddHandler(handlerObject interface {}) {
+func (a *AwsMockHandler) AddHandler(handlerObject interface{}) {
 	handler := reflect.ValueOf(handlerObject)
 	tp := handler.Type()
 
 	if handler.Kind() == reflect.Func {
-		PanicIfF(tp.NumOut() != 2 || tp.NumIn() != 2,
-			"handler must have signature of func(context.Context, <arg>)(<res>, error)")
+		if tp.NumOut() != 2 || tp.NumIn() != 2 {
+			panic("handler must have signature of func(context.Context, <arg>)(<res>, error)")
+		}
 		a.functors = append(a.functors, handler)
 	} else {
-		PanicIfF(tp.NumMethod() == 0, "the handler must have invokable methods")
+
+		if tp.NumMethod() == 0 {
+			panic("handler must have at least one method")
+		}
 		a.handlers = append(a.handlers, handler)
 	}
 }
