@@ -86,7 +86,7 @@ func (a *AwsMockHandler) AwsConfig() aws.Config {
 	return *cfg
 }
 
-func (a *AwsMockHandler) AddHandler(handlerObject interface{}) {
+func (a *AwsMockHandler) AddHandler(handlerObject any) {
 	handler := reflect.ValueOf(handlerObject)
 	tp := handler.Type()
 
@@ -105,11 +105,11 @@ func (a *AwsMockHandler) AddHandler(handlerObject interface{}) {
 }
 
 func (a *AwsMockHandler) invokeMethod(ctx context.Context,
-	params interface{}) (interface{}, error) {
+	params any) (any, error) {
 
 	for _, h := range a.handlers {
-		for i := 0; i < h.NumMethod(); i++ {
-			method := h.Method(i)
+		for _, method := range h.Methods() {
+			method := method
 
 			matched, res, err := tryInvoke(ctx, params, method)
 			if matched {
@@ -128,12 +128,12 @@ func (a *AwsMockHandler) invokeMethod(ctx context.Context,
 	panic("could not find a handler for operation: " + awsmiddleware.GetOperationName(ctx))
 }
 
-func tryInvoke(ctx context.Context, params interface{}, method reflect.Value) (
-	bool, interface{}, error) {
+func tryInvoke(ctx context.Context, params any, method reflect.Value) (
+	bool, any, error) {
 
 	paramType := reflect.TypeOf(params)
-	errorType := reflect.TypeOf((*error)(nil)).Elem()
-	contextType := reflect.TypeOf((*context.Context)(nil)).Elem()
+	errorType := reflect.TypeFor[error]()
+	contextType := reflect.TypeFor[context.Context]()
 
 	methodDesc := method.Type()
 	if methodDesc.NumIn() != 2 || methodDesc.NumOut() != 2 {
